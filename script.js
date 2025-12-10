@@ -8,12 +8,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
 const firebaseConfig = {
-  databaseURL: "https://aqua-flood-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+  databaseURL:
+    "https://aqua-flood-system-default-rtdb.asia-southeast1.firebasedatabase.app",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// ==========================================
+//           UI REFERENCES
+// ==========================================
 const ui = {
   waterVal: document.getElementById("water-value"),
   waterBar: document.getElementById("water-bar"),
@@ -39,12 +43,14 @@ const ui = {
 
 document.addEventListener("DOMContentLoaded", () => {
   const splash = document.getElementById("splash-screen");
-  
   setTimeout(() => {
     splash.classList.add("hidden");
   }, 3000);
 });
 
+// ==========================================
+//           CHART CONFIGURATION
+// ==========================================
 let myChart;
 
 function initChart() {
@@ -127,7 +133,7 @@ function initChart() {
       scales: {
         x: {
           grid: { display: false },
-          ticks: { maxTicksLimit: 6, color: "#94a3b8" }, 
+          ticks: { maxTicksLimit: 6, color: "#94a3b8" },
         },
         y: {
           grid: { color: "rgba(255,255,255,0.05)" },
@@ -142,16 +148,21 @@ function initChart() {
 
 initChart();
 
+// ==========================================
+//           THEME & CLOCK
+// ==========================================
 let isDarkMode = true;
 ui.themeBtn.addEventListener("click", () => {
   isDarkMode = !isDarkMode;
   document.body.classList.toggle("dark-mode");
   ui.themeIcon.setAttribute("data-lucide", isDarkMode ? "sun" : "moon");
   if (window.lucide) window.lucide.createIcons();
-  
+
   if (myChart) {
     const textColor = isDarkMode ? "#94a3b8" : "#475569";
-    const gridColor = isDarkMode ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)";
+    const gridColor = isDarkMode
+      ? "rgba(255, 255, 255, 0.05)"
+      : "rgba(0, 0, 0, 0.05)";
     myChart.options.scales.x.ticks.color = textColor;
     myChart.options.scales.y.ticks.color = textColor;
     myChart.options.scales.y.grid.color = gridColor;
@@ -163,42 +174,63 @@ setInterval(() => {
   const now = new Date();
   ui.dateDisplay.innerText = now
     .toLocaleDateString("en-GB", {
-      weekday: "short", day: "2-digit", month: "short",
-      hour: "2-digit", minute: "2-digit",
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
     })
     .replace(",", " -");
 }, 1000);
 
+// ==========================================
+//           REALTIME DATA LISTENER
+// ==========================================
 const currentRef = ref(db, "AQUA/Current");
 onValue(currentRef, (snapshot) => {
   const data = snapshot.val();
   if (data) {
+    // --- 1. Water Parsing ---
     let waterRaw = parseFloat(data.water);
-    if (waterRaw >= 1000) {
+    // Filter error reading (999.0 from Arduino means timeout/too far)
+    if (waterRaw >= 900 || isNaN(waterRaw)) {
       ui.waterVal.innerText = "Err";
       ui.waterBar.style.width = "0%";
-      waterRaw = 0;
+      waterRaw = 0; // Treat as 0 for logic safety
     } else {
       ui.waterVal.innerText = waterRaw.toFixed(1);
+      // Visual calculation for bar (assuming 100cm max depth for bar visual)
       let visualPct = 100 - waterRaw;
       if (visualPct < 0) visualPct = 0;
       if (visualPct > 100) visualPct = 100;
       ui.waterBar.style.width = `${visualPct}%`;
     }
 
+    // --- 2. Soil Parsing ---
     const soilMoisture = data.soil || 0;
     ui.soilVal.innerText = soilMoisture;
-    ui.soilText.innerText = soilMoisture > 60 ? "Wet / Saturated" : "Dry / Stable";
+    ui.soilText.innerText =
+      soilMoisture > 60 ? "Wet / Saturated" : "Dry / Stable";
 
-    const progressColor = getComputedStyle(document.body).getPropertyValue("--text-primary").trim();
-    const trailColor = getComputedStyle(document.body).getPropertyValue("--border-color").trim();
-    ui.soilCircle.style.background = `conic-gradient(${progressColor} ${soilMoisture * 3.6}deg, ${trailColor} 0deg)`;
+    // Soil Circle CSS
+    const progressColor = getComputedStyle(document.body)
+      .getPropertyValue("--text-primary")
+      .trim();
+    const trailColor = getComputedStyle(document.body)
+      .getPropertyValue("--border-color")
+      .trim();
+    ui.soilCircle.style.background = `conic-gradient(${progressColor} ${
+      soilMoisture * 3.6
+    }deg, ${trailColor} 0deg)`;
 
+    // --- 3. Rain Parsing ---
     const rainRaw = data.rain || 4095;
+    // Arduino: 4095 (Dry) -> 0 (Wet)
     let rainPct = Math.round(((4095 - rainRaw) / 4095) * 100);
     if (rainPct < 0) rainPct = 0;
     ui.rainPercent.innerText = rainPct;
 
+    // Icon Logic (Matches Arduino RAIN_LIGHT_THRESH 2500)
     if (rainRaw < 2500) {
       ui.rainText.innerText = "RAINING";
       ui.rainIcon.setAttribute("data-lucide", "cloud-rain");
@@ -207,25 +239,61 @@ onValue(currentRef, (snapshot) => {
       ui.rainIcon.setAttribute("data-lucide", "cloud");
     }
 
+    // --- 4. Logic Calculation ---
+    // Pass raw values to match Arduino logic
     calculateStatus(waterRaw, rainRaw, soilMoisture);
+
     if (window.lucide) window.lucide.createIcons();
   }
 });
 
+// ==========================================
+//    LOGIC CORE (SYNCED WITH ARDUINO)
+// ==========================================
 function calculateStatus(water, rainRaw, soil) {
   let status = "SAFE";
   let msg = "System operational. All sensors within safe parameters.";
 
-  if (water > 0 && water < 30) {
+  // CONSTANTS FROM ARDUINO CODE
+  const WATER_DANGER_CM = 45;
+  const WATER_WARN_CM = 55;
+  const RAIN_HEAVY = 1500;
+  const RAIN_LIGHT = 2500;
+
+  // LOGIC HIERARCHY MATCHING ARDUINO LOOP:
+
+  // 1. DANGER STATE (Priority 1)
+  // Logic: Water < 40 OR (Water < 50 AND (Heavy Rain OR Soil > 80%))
+  if (water > 0 && water < WATER_DANGER_CM) {
     status = "DANGER";
-    msg = "CRITICAL ALERT: Flood imminent! Water level critical (<30cm).";
-  } else if (water > 0 && water < 60 && (rainRaw < 1500 || soil > 80)) {
+    msg = "CRITICAL ALERT: Flood imminent! Water level critical (<40cm).";
+  } else if (
+    water > 0 &&
+    water < WATER_WARN_CM &&
+    (rainRaw < RAIN_HEAVY || soil > 80)
+  ) {
     status = "DANGER";
-    msg = "DANGER: High water level detected with adverse weather conditions.";
-  } else if ((water > 0 && water < 60) || rainRaw < 2500 || soil > 50) {
-    status = "WARNING";
-    msg = "CAUTION: Potential flood risk detected. Monitor sensors closely.";
+    msg = "DANGER: High water level detected combined with adverse weather.";
   }
+
+  // 2. WARNING STATE (Priority 2)
+  // Logic: Water < 50 OR Rain < 2500 OR Soil > 50%
+  else if (
+    (water > 0 && water < WATER_WARN_CM) ||
+    rainRaw < RAIN_LIGHT ||
+    soil > 50
+  ) {
+    status = "WARNING";
+    msg =
+      "CAUTION: Potential flood risk detected. Rain or moisture levels high.";
+  }
+
+  // 3. SAFE STATE (Default)
+  else {
+    status = "SAFE";
+    msg = "System operational. All sensors within safe parameters.";
+  }
+
   updateSystemStatus(status, msg);
 }
 
@@ -235,7 +303,8 @@ function updateSystemStatus(statusString, msg) {
   if (statusString === "DANGER") type = "danger";
 
   ui.statusText.innerText = `SYSTEM ${statusString}`;
-  ui.adviceHeading.innerText = statusString === "SAFE" ? "SECURE" : statusString;
+  ui.adviceHeading.innerText =
+    statusString === "SAFE" ? "SECURE" : statusString;
   ui.adviceText.innerText = msg;
 
   const colorMap = {
@@ -249,10 +318,11 @@ function updateSystemStatus(statusString, msg) {
   ui.statusDot.style.backgroundColor = colorVar;
   ui.statusDot.style.boxShadow = `var(--glow-${type})`;
   ui.statusBadge.style.color = colorVar;
-  ui.statusBadge.style.borderColor = type !== "safe" ? colorVar : "var(--border-color)";
+  ui.statusBadge.style.borderColor =
+    type !== "safe" ? colorVar : "var(--border-color)";
 
   ui.adviceIconContainer.style.animationName = "none";
-  void ui.adviceIconContainer.offsetWidth;
+  void ui.adviceIconContainer.offsetWidth; // Trigger reflow
 
   if (type === "safe") {
     ui.adviceIcon.setAttribute("data-lucide", "shield-check");
@@ -269,6 +339,9 @@ function updateSystemStatus(statusString, msg) {
   }
 }
 
+// ==========================================
+//           HISTORY CHART DATA
+// ==========================================
 const historyRef = query(ref(db, "AQUA/History"), limitToLast(50));
 onValue(historyRef, (snapshot) => {
   const data = snapshot.val();
@@ -278,15 +351,21 @@ onValue(historyRef, (snapshot) => {
     const soilData = [];
     const rainData = [];
 
-    const dataArray = Object.values(data).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const dataArray = Object.values(data).sort(
+      (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+    );
 
     dataArray.forEach((entry) => {
+      // Use Arduino's formatted timestamp string if available
       if (entry.timestamp) {
-        const dateObj = new Date(entry.timestamp);
-        const timeLabel = dateObj.toLocaleTimeString("id-ID", {
-          hour: "2-digit", minute: "2-digit", hour12: false,
-        });
-        labels.push(timeLabel);
+        // Simple regex to grab HH:MM from "YYYY-MM-DD HH:MM:SS"
+        const timePart = entry.timestamp.split(" ")[1];
+        if (timePart) {
+          const [hh, mm] = timePart.split(":");
+          labels.push(`${hh}:${mm}`);
+        } else {
+          labels.push("??:??");
+        }
       } else {
         labels.push("??:??");
       }

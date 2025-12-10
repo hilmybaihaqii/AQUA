@@ -8,8 +8,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
 const firebaseConfig = {
-  databaseURL:
-    "https://aqua-flood-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+  databaseURL: "https://aqua-flood-system-default-rtdb.asia-southeast1.firebasedatabase.app",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -120,10 +119,7 @@ function initChart() {
       scales: {
         x: {
           grid: { display: false },
-          ticks: {
-            maxTicksLimit: 8,
-            color: "#94a3b8",
-          },
+          ticks: { maxTicksLimit: 6, color: "#94a3b8" }, 
         },
         y: {
           grid: { color: "rgba(255,255,255,0.05)" },
@@ -144,13 +140,10 @@ ui.themeBtn.addEventListener("click", () => {
   document.body.classList.toggle("dark-mode");
   ui.themeIcon.setAttribute("data-lucide", isDarkMode ? "sun" : "moon");
   if (window.lucide) window.lucide.createIcons();
-
+  
   if (myChart) {
     const textColor = isDarkMode ? "#94a3b8" : "#475569";
-    const gridColor = isDarkMode
-      ? "rgba(255, 255, 255, 0.05)"
-      : "rgba(0, 0, 0, 0.05)";
-
+    const gridColor = isDarkMode ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)";
     myChart.options.scales.x.ticks.color = textColor;
     myChart.options.scales.y.ticks.color = textColor;
     myChart.options.scales.y.grid.color = gridColor;
@@ -162,11 +155,8 @@ setInterval(() => {
   const now = new Date();
   ui.dateDisplay.innerText = now
     .toLocaleDateString("en-GB", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
+      weekday: "short", day: "2-digit", month: "short",
+      hour: "2-digit", minute: "2-digit",
     })
     .replace(",", " -");
 }, 1000);
@@ -190,18 +180,11 @@ onValue(currentRef, (snapshot) => {
 
     const soilMoisture = data.soil || 0;
     ui.soilVal.innerText = soilMoisture;
-    ui.soilText.innerText =
-      soilMoisture > 60 ? "Wet / Saturated" : "Dry / Stable";
+    ui.soilText.innerText = soilMoisture > 60 ? "Wet / Saturated" : "Dry / Stable";
 
-    const progressColor = getComputedStyle(document.body)
-      .getPropertyValue("--text-primary")
-      .trim();
-    const trailColor = getComputedStyle(document.body)
-      .getPropertyValue("--border-color")
-      .trim();
-    ui.soilCircle.style.background = `conic-gradient(${progressColor} ${
-      soilMoisture * 3.6
-    }deg, ${trailColor} 0deg)`;
+    const progressColor = getComputedStyle(document.body).getPropertyValue("--text-primary").trim();
+    const trailColor = getComputedStyle(document.body).getPropertyValue("--border-color").trim();
+    ui.soilCircle.style.background = `conic-gradient(${progressColor} ${soilMoisture * 3.6}deg, ${trailColor} 0deg)`;
 
     const rainRaw = data.rain || 4095;
     let rainPct = Math.round(((4095 - rainRaw) / 4095) * 100);
@@ -244,8 +227,7 @@ function updateSystemStatus(statusString, msg) {
   if (statusString === "DANGER") type = "danger";
 
   ui.statusText.innerText = `SYSTEM ${statusString}`;
-  ui.adviceHeading.innerText =
-    statusString === "SAFE" ? "SECURE" : statusString;
+  ui.adviceHeading.innerText = statusString === "SAFE" ? "SECURE" : statusString;
   ui.adviceText.innerText = msg;
 
   const colorMap = {
@@ -259,8 +241,7 @@ function updateSystemStatus(statusString, msg) {
   ui.statusDot.style.backgroundColor = colorVar;
   ui.statusDot.style.boxShadow = `var(--glow-${type})`;
   ui.statusBadge.style.color = colorVar;
-  ui.statusBadge.style.borderColor =
-    type !== "safe" ? colorVar : "var(--border-color)";
+  ui.statusBadge.style.borderColor = type !== "safe" ? colorVar : "var(--border-color)";
 
   ui.adviceIconContainer.style.animationName = "none";
   void ui.adviceIconContainer.offsetWidth;
@@ -281,27 +262,21 @@ function updateSystemStatus(statusString, msg) {
 }
 
 const historyRef = query(ref(db, "AQUA/History"), limitToLast(50));
-
 onValue(historyRef, (snapshot) => {
   const data = snapshot.val();
-
   if (data) {
     const labels = [];
     const waterData = [];
     const soilData = [];
     const rainData = [];
 
-    const dataArray = Object.values(data).sort((a, b) => {
-      return new Date(a.timestamp) - new Date(b.timestamp);
-    });
+    const dataArray = Object.values(data).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     dataArray.forEach((entry) => {
       if (entry.timestamp) {
         const dateObj = new Date(entry.timestamp);
         const timeLabel = dateObj.toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
+          hour: "2-digit", minute: "2-digit", hour12: false,
         });
         labels.push(timeLabel);
       } else {
@@ -311,7 +286,6 @@ onValue(historyRef, (snapshot) => {
       let w = parseFloat(entry.water);
       if (w > 900 || isNaN(w)) w = 0;
       waterData.push(w);
-
       soilData.push(entry.soil);
 
       let rRaw = parseFloat(entry.rain || 4095);

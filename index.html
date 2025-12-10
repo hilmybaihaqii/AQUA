@@ -13,9 +13,7 @@
     />
 
     <script src="https://unpkg.com/lucide@latest"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="dark-mode">
@@ -26,7 +24,7 @@
         </div>
         <div class="nav-right">
           <span class="date-display" id="date-display">System Init...</span>
-          <div class="divider-vertical"></div>
+          <div class="divider-vertical desktop-only"></div>
           <button id="theme-toggle" class="icon-btn" aria-label="Ganti Tema">
             <i data-lucide="sun" id="theme-icon"></i>
           </button>
@@ -36,7 +34,7 @@
 
       <main class="dashboard">
         <div class="page-header">
-          <div>
+          <div class="header-text">
             <h1 class="page-title">Command Center</h1>
             <p class="page-subtitle">Real-time Environmental Monitoring</p>
           </div>
@@ -51,19 +49,22 @@
             <div class="card-bg-grid"></div>
             <div class="card-scan-line"></div>
 
-            <div class="protocol-content center-mode">
+            <div class="protocol-content">
               <div class="status-indicator-group">
                 <div class="icon-container pulse-effect">
                   <i data-lucide="shield" class="icon-large"></i>
                 </div>
-                <div>
+                <div class="status-text-wrapper">
                   <h3 class="advice-title">CURRENT STATUS</h3>
                   <h2 id="advice-status-heading">STANDBY</h2>
                 </div>
               </div>
-              <p id="advice-text" class="advice-text">
-                Establishing secure connection to Firebase Realtime Database...
-              </p>
+              <div class="advice-message-wrapper">
+                <p id="advice-text" class="advice-text">
+                  Establishing secure connection to Firebase Realtime
+                  Database...
+                </p>
+              </div>
             </div>
           </div>
 
@@ -158,15 +159,13 @@
 
       <footer class="footer">
         <div class="footer-content">
-          <p>&copy; 2024 AQUA Platform. Engineered for Safety.</p>
+          <p>&copy; 2024 AQUA Platform.</p>
           <div class="footer-links">
-            <span>v4.0 Full Dashboard</span>
-            <span>Server: Firebase RTDB</span>
+            <span>v4.0 Mobile Ready</span>
           </div>
         </div>
       </footer>
     </div>
-
     <script type="module" src="script.js"></script>
   </body>
 </html>

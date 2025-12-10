@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AQUA | Flood Control System</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="dark-mode">
+    <div class="app-wrapper">
+      <nav class="navbar">
+        <div class="nav-left">
+          <div class="brand-logo">AQUA<span class="dot">.</span></div>
+        </div>
+        <div class="nav-right">
+          <span class="date-display" id="date-display">System Init...</span>
+          <div class="divider-vertical"></div>
+          <button id="theme-toggle" class="icon-btn" aria-label="Ganti Tema">
+            <i data-lucide="sun" id="theme-icon"></i>
+          </button>
+          <div class="profile-avatar">ADMIN</div>
+        </div>
+      </nav>
+
+      <main class="dashboard">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Command Center</h1>
+            <p class="page-subtitle">Real-time Environmental Monitoring</p>
+          </div>
+          <div class="status-badge" id="system-status-badge">
+            <span class="status-dot"></span>
+            <span id="system-status-text">CONNECTING...</span>
+          </div>
+        </div>
+
+        <div class="main-layout">
+          <div class="card advice-card featured-card">
+            <div class="card-bg-grid"></div>
+            <div class="card-scan-line"></div>
+
+            <div class="protocol-content center-mode">
+              <div class="status-indicator-group">
+                <div class="icon-container pulse-effect">
+                  <i data-lucide="shield" class="icon-large"></i>
+                </div>
+                <div>
+                  <h3 class="advice-title">CURRENT STATUS</h3>
+                  <h2 id="advice-status-heading">STANDBY</h2>
+                </div>
+              </div>
+              <p id="advice-text" class="advice-text">
+                Establishing secure connection to Firebase Realtime Database...
+              </p>
+            </div>
+          </div>
+
+          <div class="sensor-grid">
+            <div class="card water-card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <i data-lucide="waves" class="icon"></i>
+                  <span>WATER LEVEL</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="value-group">
+                  <span class="value" id="water-value">--</span>
+                  <span class="unit">CM</span>
+                </div>
+                <div class="visual-bar-container">
+                  <div
+                    class="visual-bar"
+                    id="water-bar"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+              <div class="card-footer">Sensor: JSN-SR04T</div>
+            </div>
+
+            <div class="card soil-card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <i data-lucide="sprout" class="icon"></i>
+                  <span>SOIL MOISTURE</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="circular-progress" id="soil-circle">
+                  <div class="inner-circle">
+                    <span class="value" id="soil-value">--</span>
+                    <span class="unit">%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                Condition: <span id="soil-text">Analyzing...</span>
+              </div>
+            </div>
+
+            <div class="card rain-card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <i data-lucide="cloud-rain" class="icon"></i>
+                  <span>RAIN INTENSITY</span>
+                </div>
+              </div>
+              <div class="card-body center-content">
+                <div class="weather-icon-box">
+                  <i data-lucide="loader" id="weather-dynamic-icon"></i>
+                </div>
+                <h2 id="rain-text">SCANNING...</h2>
+                <p style="color: var(--text-secondary); margin-top: 5px">
+                  Intensity: <span id="rain-percent">0</span>%
+                </p>
+              </div>
+              <div class="card-footer">Sensor: FC-37 Rain</div>
+            </div>
+          </div>
+
+          <div class="card chart-card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <i data-lucide="activity" class="icon"></i>
+                <span>LIVE SENSOR TRENDS</span>
+              </div>
+              <div class="chart-legend-custom">
+                <span class="legend-item"
+                  ><span class="dot-l water-l"></span> Water</span
+                >
+                <span class="legend-item"
+                  ><span class="dot-l soil-l"></span> Soil</span
+                >
+                <span class="legend-item"
+                  ><span class="dot-l rain-l"></span> Rain</span
+                >
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="historyChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <div class="footer-content">
+          <p>&copy; 2024 AQUA Platform. Engineered for Safety.</p>
+          <div class="footer-links">
+            <span>v4.0 Full Dashboard</span>
+            <span>Server: Firebase RTDB</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>

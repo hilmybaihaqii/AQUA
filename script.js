@@ -37,6 +37,14 @@ const ui = {
   chartCanvas: document.getElementById("historyChart"),
 };
 
+document.addEventListener("DOMContentLoaded", () => {
+  const splash = document.getElementById("splash-screen");
+  
+  setTimeout(() => {
+    splash.classList.add("hidden");
+  }, 3000);
+});
+
 let myChart;
 
 function initChart() {

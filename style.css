@@ -216,3 +216,73 @@ body {
   .chart-card { min-height: auto; }
   .chart-wrapper { height: 250px; }
 }
+
+/* --- LUXURY SPLASH SCREEN --- */
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #09090b;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
+}
+
+.splash-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.splash-content {
+  text-align: center;
+  animation: fadeUp 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.splash-logo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 4rem;
+  font-weight: 700;
+  color: #f3f4f6;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+}
+
+.splash-dot {
+  color: #059669;
+  text-shadow: 0 0 20px rgba(5, 150, 105, 0.5);
+}
+
+.splash-line {
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #059669, transparent);
+  margin: 0 auto 1.5rem auto;
+  animation: lineExpand 1.5s ease-out forwards 0.5s;
+}
+
+.splash-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 6px;
+  color: #6b7280;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeIn 1s ease-out forwards 1s;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lineExpand {
+  to { width: 100px; }
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}

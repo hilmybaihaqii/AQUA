@@ -7,9 +7,7 @@ import {
   limitToLast,
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-// --- 1. CONFIG ---
 const firebaseConfig = {
-  // Pastikan URL ini sesuai dengan project Firebase kamu
   databaseURL:
     "https://aqua-flood-system-default-rtdb.asia-southeast1.firebasedatabase.app",
 };
@@ -17,7 +15,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- 2. UI REFERENCES ---
 const ui = {
   waterVal: document.getElementById("water-value"),
   waterBar: document.getElementById("water-bar"),
@@ -41,13 +38,11 @@ const ui = {
   chartCanvas: document.getElementById("historyChart"),
 };
 
-// --- 3. CHART SETUP ---
 let myChart;
 
 function initChart() {
   const ctx = ui.chartCanvas.getContext("2d");
 
-  // Gradients agar tampilan modern
   const gradientWater = ctx.createLinearGradient(0, 0, 0, 400);
   gradientWater.addColorStop(0, "rgba(6, 182, 212, 0.4)");
   gradientWater.addColorStop(1, "rgba(6, 182, 212, 0.0)");
@@ -67,12 +62,12 @@ function initChart() {
   myChart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: [], // Akan diisi timestamp
+      labels: [],
       datasets: [
         {
           label: "Water (cm)",
           data: [],
-          borderColor: "#06b6d4", // Cyan
+          borderColor: "#06b6d4",
           backgroundColor: gradientWater,
           borderWidth: 2,
           fill: "start",
@@ -83,7 +78,7 @@ function initChart() {
         {
           label: "Soil (%)",
           data: [],
-          borderColor: "#10b981", // Emerald
+          borderColor: "#10b981",
           backgroundColor: gradientSoil,
           borderWidth: 2,
           fill: "start",
@@ -94,7 +89,7 @@ function initChart() {
         {
           label: "Rain (%)",
           data: [],
-          borderColor: "#a855f7", // Purple
+          borderColor: "#a855f7",
           backgroundColor: gradientRain,
           borderWidth: 2,
           fill: "start",
@@ -109,7 +104,7 @@ function initChart() {
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { display: false }, // Legend custom di HTML
+        legend: { display: false },
         tooltip: {
           backgroundColor: "rgba(15, 23, 42, 0.9)",
           titleColor: "#f1f5f9",
@@ -126,7 +121,7 @@ function initChart() {
         x: {
           grid: { display: false },
           ticks: {
-            maxTicksLimit: 8, // Membatasi jumlah label jam agar tidak menumpuk
+            maxTicksLimit: 8,
             color: "#94a3b8",
           },
         },
@@ -143,7 +138,6 @@ function initChart() {
 
 initChart();
 
-// --- 4. THEME & DATE LOGIC ---
 let isDarkMode = true;
 ui.themeBtn.addEventListener("click", () => {
   isDarkMode = !isDarkMode;
@@ -151,7 +145,6 @@ ui.themeBtn.addEventListener("click", () => {
   ui.themeIcon.setAttribute("data-lucide", isDarkMode ? "sun" : "moon");
   if (window.lucide) window.lucide.createIcons();
 
-  // Update warna chart saat ganti tema
   if (myChart) {
     const textColor = isDarkMode ? "#94a3b8" : "#475569";
     const gridColor = isDarkMode
@@ -178,15 +171,12 @@ setInterval(() => {
     .replace(",", " -");
 }, 1000);
 
-// --- 5. LIVE DATA LISTENER (Untuk Kartu Atas) ---
 const currentRef = ref(db, "AQUA/Current");
 onValue(currentRef, (snapshot) => {
   const data = snapshot.val();
   if (data) {
-    // Water Logic
     let waterRaw = parseFloat(data.water);
     if (waterRaw >= 1000) {
-      // Filter error sensor
       ui.waterVal.innerText = "Err";
       ui.waterBar.style.width = "0%";
       waterRaw = 0;
@@ -198,13 +188,11 @@ onValue(currentRef, (snapshot) => {
       ui.waterBar.style.width = `${visualPct}%`;
     }
 
-    // Soil Logic
     const soilMoisture = data.soil || 0;
     ui.soilVal.innerText = soilMoisture;
     ui.soilText.innerText =
       soilMoisture > 60 ? "Wet / Saturated" : "Dry / Stable";
 
-    // Update lingkaran soil
     const progressColor = getComputedStyle(document.body)
       .getPropertyValue("--text-primary")
       .trim();
@@ -215,7 +203,6 @@ onValue(currentRef, (snapshot) => {
       soilMoisture * 3.6
     }deg, ${trailColor} 0deg)`;
 
-    // Rain Logic
     const rainRaw = data.rain || 4095;
     let rainPct = Math.round(((4095 - rainRaw) / 4095) * 100);
     if (rainPct < 0) rainPct = 0;
@@ -229,7 +216,6 @@ onValue(currentRef, (snapshot) => {
       ui.rainIcon.setAttribute("data-lucide", "cloud");
     }
 
-    // Status System Logic
     calculateStatus(waterRaw, rainRaw, soilMoisture);
     if (window.lucide) window.lucide.createIcons();
   }
@@ -277,7 +263,7 @@ function updateSystemStatus(statusString, msg) {
     type !== "safe" ? colorVar : "var(--border-color)";
 
   ui.adviceIconContainer.style.animationName = "none";
-  void ui.adviceIconContainer.offsetWidth; // Trigger reflow
+  void ui.adviceIconContainer.offsetWidth;
 
   if (type === "safe") {
     ui.adviceIcon.setAttribute("data-lucide", "shield-check");
@@ -294,8 +280,6 @@ function updateSystemStatus(statusString, msg) {
   }
 }
 
-// --- 6. HISTORY DATA LISTENER (Chart dengan Timestamp Asli) ---
-// Mengambil 50 data terakhir agar chart tidak terlalu berat
 const historyRef = query(ref(db, "AQUA/History"), limitToLast(50));
 
 onValue(historyRef, (snapshot) => {
@@ -307,16 +291,13 @@ onValue(historyRef, (snapshot) => {
     const soilData = [];
     const rainData = [];
 
-    // Ubah object ke array dan urutkan berdasarkan timestamp (lama -> baru)
     const dataArray = Object.values(data).sort((a, b) => {
       return new Date(a.timestamp) - new Date(b.timestamp);
     });
 
     dataArray.forEach((entry) => {
-      // 1. Parsing Timestamp (contoh: "2025-12-09 17:10:34")
       if (entry.timestamp) {
         const dateObj = new Date(entry.timestamp);
-        // Format jam:menit (Contoh: 17:10)
         const timeLabel = dateObj.toLocaleTimeString("id-ID", {
           hour: "2-digit",
           minute: "2-digit",
@@ -327,29 +308,23 @@ onValue(historyRef, (snapshot) => {
         labels.push("??:??");
       }
 
-      // 2. Data Water
       let w = parseFloat(entry.water);
-      if (w > 900 || isNaN(w)) w = 0; // Filter glitch sensor
+      if (w > 900 || isNaN(w)) w = 0;
       waterData.push(w);
 
-      // 3. Data Soil
       soilData.push(entry.soil);
 
-      // 4. Data Rain (Raw -> Percent)
       let rRaw = parseFloat(entry.rain || 4095);
       let rPct = Math.round(((4095 - rRaw) / 4095) * 100);
       if (rPct < 0) rPct = 0;
       rainData.push(rPct);
     });
 
-    // Update Chart
     if (myChart) {
       myChart.data.labels = labels;
       myChart.data.datasets[0].data = waterData;
       myChart.data.datasets[1].data = soilData;
       myChart.data.datasets[2].data = rainData;
-
-      // Update tanpa animasi berlebihan (mode: 'none')
       myChart.update("none");
     }
   }

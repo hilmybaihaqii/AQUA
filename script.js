@@ -7,10 +7,7 @@ import {
   limitToLast,
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-const firebaseConfig = {
-  databaseURL:
-    "https://aqua-flood-system-default-rtdb.asia-southeast1.firebasedatabase.app",
-};
+import { firebaseConfig } from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);

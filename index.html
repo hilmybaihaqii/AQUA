@@ -43,14 +43,43 @@
 
       <main class="dashboard">
         <div class="page-header">
+  
           <div class="header-text">
             <h1 class="page-title">Command Center</h1>
             <p class="page-subtitle">Real-time Environmental Monitoring</p>
           </div>
+
+          <div class="weather-hud-container">
+            <div class="weather-location">
+              <i data-lucide="map-pin" class="loc-icon"></i>
+              <span id="location-name">LOCATING...</span>
+            </div>
+            
+            <div class="weather-metrics">
+              <div class="metric-main">
+                <i data-lucide="sun" id="api-weather-icon" class="weather-icon-hud"></i>
+                <span id="api-temp" class="temp-big">--°</span>
+              </div>
+              
+              <div class="metric-divider"></div>
+              
+              <div class="metric-details">
+                <div class="detail-row">
+                  <span id="api-condition" class="condition-text">Scanning...</span>
+                </div>
+                <div class="detail-row meta-row">
+                  <i data-lucide="wind" class="tiny-icon"></i>
+                  <span id="api-wind">0 km/h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="status-badge" id="system-status-badge">
             <span class="status-dot"></span>
             <span id="system-status-text">CONNECTING...</span>
           </div>
+
         </div>
 
         <div class="main-layout">

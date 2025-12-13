@@ -1,3 +1,6 @@
+// ==========================================
+// 1. IMPORTS & SETUP
+// ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import {
   getDatabase,
@@ -7,15 +10,24 @@ import {
   limitToLast,
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
+// Pastikan file firebase-config.js ada dan berisi konfigurasi firebase kamu
 import { firebaseConfig } from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ==========================================
-//           UI REFERENCES
+// 2. UI REFERENCES (DOM ELEMENTS)
 // ==========================================
 const ui = {
+  // Weather HUD Elements (New)
+  locName: document.getElementById("location-name"),
+  temp: document.getElementById("api-temp"),
+  condition: document.getElementById("api-condition"),
+  wind: document.getElementById("api-wind"),
+  weatherIcon: document.getElementById("api-weather-icon"),
+
+  // Sensor Elements
   waterVal: document.getElementById("water-value"),
   waterBar: document.getElementById("water-bar"),
   soilVal: document.getElementById("soil-value"),
@@ -24,6 +36,8 @@ const ui = {
   rainText: document.getElementById("rain-text"),
   rainPercent: document.getElementById("rain-percent"),
   rainIcon: document.getElementById("weather-dynamic-icon"),
+
+  // Status & System Elements
   statusText: document.getElementById("system-status-text"),
   statusDot: document.querySelector(".status-dot"),
   statusBadge: document.getElementById("system-status-badge"),
@@ -32,27 +46,131 @@ const ui = {
   adviceText: document.getElementById("advice-text"),
   adviceIconContainer: document.querySelector(".icon-container"),
   adviceIcon: document.querySelector(".icon-container i"),
+  
+  // General
   themeBtn: document.getElementById("theme-toggle"),
   themeIcon: document.getElementById("theme-icon"),
   dateDisplay: document.getElementById("date-display"),
   chartCanvas: document.getElementById("historyChart"),
 };
 
+// Splash Screen Logic
 document.addEventListener("DOMContentLoaded", () => {
   const splash = document.getElementById("splash-screen");
-  setTimeout(() => {
-    splash.classList.add("hidden");
-  }, 3000);
+  if(splash) {
+    setTimeout(() => {
+      splash.classList.add("hidden");
+    }, 3000);
+  }
+  // Init Weather immediately
+  initWeatherSystem();
 });
 
 // ==========================================
-//           CHART CONFIGURATION
+// 3. WEATHER SYSTEM (LUXURY HUD)
+// ==========================================
+
+function initWeatherSystem() {
+  ui.locName.innerText = "LOCATING...";
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        // Ambil Data Cuaca & Nama Kota
+        fetchWeatherData(lat, lon);
+        fetchCityName(lat, lon);
+      },
+      (error) => {
+        console.error("Location access denied:", error);
+        ui.locName.innerText = "BANDUNG (DEF)";
+        fetchWeatherData(-6.97, 107.63); // Default Coordinates
+      }
+    );
+  } else {
+    ui.locName.innerText = "NO GPS";
+  }
+}
+
+async function fetchCityName(lat, lon) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data && data.address) {
+      const city = data.address.city || data.address.town || data.address.village || "UNKNOWN AREA";
+      const country = data.address.country_code ? data.address.country_code.toUpperCase() : "";
+      ui.locName.innerText = `${city}, ${country}`;
+    }
+  } catch (error) {
+    console.error("City Fetch Error:", error);
+    ui.locName.innerText = `LAT: ${lat.toFixed(2)}`;
+  }
+}
+
+async function fetchWeatherData(lat, lon) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+    const response = await fetch(url);
+    const data = await response.json();
+    const current = data.current_weather;
+
+    // Update UI
+    ui.temp.innerText = `${Math.round(current.temperature)}°`;
+    ui.wind.innerText = `${current.windspeed} km/h`;
+    
+    // Decode Weather Code to Text & Icon
+    const weatherStatus = decodeWMOCode(current.weathercode);
+    ui.condition.innerText = weatherStatus.text;
+    ui.weatherIcon.setAttribute("data-lucide", weatherStatus.icon);
+
+    // Refresh Icons
+    if (window.lucide) window.lucide.createIcons();
+
+  } catch (err) {
+    console.error("Weather API Error:", err);
+    ui.condition.innerText = "OFFLINE";
+  }
+}
+
+function decodeWMOCode(code) {
+  const map = {
+    0: { text: "Sunny", icon: "sun" },
+    1: { text: "Mainly Clear", icon: "sun" },
+    2: { text: "Partly Cloudy", icon: "cloud-sun" },
+    3: { text: "Overcast", icon: "cloud" },
+    45: { text: "Foggy", icon: "cloud-fog" },
+    48: { text: "Rime Fog", icon: "cloud-fog" },
+    51: { text: "Light Drizzle", icon: "cloud-drizzle" },
+    53: { text: "Drizzle", icon: "cloud-drizzle" },
+    55: { text: "Heavy Drizzle", icon: "cloud-drizzle" },
+    61: { text: "Slight Rain", icon: "cloud-rain" },
+    63: { text: "Moderate Rain", icon: "cloud-rain" },
+    65: { text: "Heavy Rain", icon: "cloud-rain" },
+    80: { text: "Showers", icon: "cloud-rain" },
+    81: { text: "Showers", icon: "cloud-rain" },
+    82: { text: "Violent Rain", icon: "cloud-rain" },
+    95: { text: "Thunderstorm", icon: "cloud-lightning" },
+    96: { text: "Thunderstorm", icon: "cloud-lightning" },
+    99: { text: "Thunderstorm", icon: "cloud-lightning" },
+  };
+  return map[code] || { text: "Unknown", icon: "help-circle" };
+}
+
+// Refresh weather every 30 minutes
+setInterval(initWeatherSystem, 30 * 60 * 1000);
+
+// ==========================================
+// 4. CHART JS CONFIGURATION
 // ==========================================
 let myChart;
 
 function initChart() {
   const ctx = ui.chartCanvas.getContext("2d");
 
+  // Gradients
   const gradientWater = ctx.createLinearGradient(0, 0, 0, 400);
   gradientWater.addColorStop(0, "rgba(6, 182, 212, 0.4)");
   gradientWater.addColorStop(1, "rgba(6, 182, 212, 0.0)");
@@ -142,11 +260,10 @@ function initChart() {
     },
   });
 }
-
 initChart();
 
 // ==========================================
-//           THEME & CLOCK
+// 5. THEME & CLOCK
 // ==========================================
 let isDarkMode = true;
 ui.themeBtn.addEventListener("click", () => {
@@ -157,9 +274,7 @@ ui.themeBtn.addEventListener("click", () => {
 
   if (myChart) {
     const textColor = isDarkMode ? "#94a3b8" : "#475569";
-    const gridColor = isDarkMode
-      ? "rgba(255, 255, 255, 0.05)"
-      : "rgba(0, 0, 0, 0.05)";
+    const gridColor = isDarkMode ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)";
     myChart.options.scales.x.ticks.color = textColor;
     myChart.options.scales.y.ticks.color = textColor;
     myChart.options.scales.y.grid.color = gridColor;
@@ -181,7 +296,7 @@ setInterval(() => {
 }, 1000);
 
 // ==========================================
-//           REALTIME DATA LISTENER
+// 6. FIREBASE REALTIME LISTENERS
 // ==========================================
 const currentRef = ref(db, "AQUA/Current");
 onValue(currentRef, (snapshot) => {
@@ -189,14 +304,13 @@ onValue(currentRef, (snapshot) => {
   if (data) {
     // --- 1. Water Parsing ---
     let waterRaw = parseFloat(data.water);
-    // Filter error reading (999.0 from Arduino means timeout/too far)
     if (waterRaw >= 900 || isNaN(waterRaw)) {
       ui.waterVal.innerText = "Err";
       ui.waterBar.style.width = "0%";
-      waterRaw = 0; // Treat as 0 for logic safety
+      waterRaw = 0; 
     } else {
       ui.waterVal.innerText = waterRaw.toFixed(1);
-      // Visual calculation for bar (assuming 100cm max depth for bar visual)
+      // Visual Bar (Assume max depth 100cm)
       let visualPct = 100 - waterRaw;
       if (visualPct < 0) visualPct = 0;
       if (visualPct > 100) visualPct = 100;
@@ -206,28 +320,20 @@ onValue(currentRef, (snapshot) => {
     // --- 2. Soil Parsing ---
     const soilMoisture = data.soil || 0;
     ui.soilVal.innerText = soilMoisture;
-    ui.soilText.innerText =
-      soilMoisture > 60 ? "Wet / Saturated" : "Dry / Stable";
+    ui.soilText.innerText = soilMoisture > 60 ? "Wet / Saturated" : "Dry / Stable";
 
-    // Soil Circle CSS
-    const progressColor = getComputedStyle(document.body)
-      .getPropertyValue("--text-primary")
-      .trim();
-    const trailColor = getComputedStyle(document.body)
-      .getPropertyValue("--border-color")
-      .trim();
-    ui.soilCircle.style.background = `conic-gradient(${progressColor} ${
-      soilMoisture * 3.6
-    }deg, ${trailColor} 0deg)`;
+    // Soil Circle Color
+    const progressColor = getComputedStyle(document.body).getPropertyValue("--text-primary").trim();
+    const trailColor = getComputedStyle(document.body).getPropertyValue("--border-color").trim();
+    ui.soilCircle.style.background = `conic-gradient(${progressColor} ${soilMoisture * 3.6}deg, ${trailColor} 0deg)`;
 
-    // --- 3. Rain Parsing ---
+    // --- 3. Rain Parsing (Sensor) ---
     const rainRaw = data.rain || 4095;
-    // Arduino: 4095 (Dry) -> 0 (Wet)
+    // 4095 = Dry, 0 = Wet
     let rainPct = Math.round(((4095 - rainRaw) / 4095) * 100);
     if (rainPct < 0) rainPct = 0;
     ui.rainPercent.innerText = rainPct;
 
-    // Icon Logic (Matches Arduino RAIN_LIGHT_THRESH 2500)
     if (rainRaw < 2500) {
       ui.rainText.innerText = "RAINING";
       ui.rainIcon.setAttribute("data-lucide", "cloud-rain");
@@ -236,56 +342,85 @@ onValue(currentRef, (snapshot) => {
       ui.rainIcon.setAttribute("data-lucide", "cloud");
     }
 
-    // --- 4. Logic Calculation ---
-    // Pass raw values to match Arduino logic
+    // --- 4. System Logic ---
     calculateStatus(waterRaw, rainRaw, soilMoisture);
-
     if (window.lucide) window.lucide.createIcons();
   }
 });
 
+// History Chart Data
+const historyRef = query(ref(db, "AQUA/History"), limitToLast(50));
+onValue(historyRef, (snapshot) => {
+  const data = snapshot.val();
+  if (data) {
+    const labels = [];
+    const waterData = [];
+    const soilData = [];
+    const rainData = [];
+
+    const dataArray = Object.values(data).sort(
+      (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+    );
+
+    dataArray.forEach((entry) => {
+      // Time Label
+      if (entry.timestamp) {
+        const timePart = entry.timestamp.split(" ")[1];
+        labels.push(timePart ? timePart.substring(0, 5) : "??:??");
+      } else {
+        labels.push("??:??");
+      }
+
+      // Water
+      let w = parseFloat(entry.water);
+      if (w > 900 || isNaN(w)) w = 0;
+      waterData.push(w);
+
+      // Soil
+      soilData.push(entry.soil);
+
+      // Rain (Convert Raw to %)
+      let rRaw = parseFloat(entry.rain || 4095);
+      let rPct = Math.round(((4095 - rRaw) / 4095) * 100);
+      rainData.push(rPct < 0 ? 0 : rPct);
+    });
+
+    if (myChart) {
+      myChart.data.labels = labels;
+      myChart.data.datasets[0].data = waterData;
+      myChart.data.datasets[1].data = soilData;
+      myChart.data.datasets[2].data = rainData;
+      myChart.update("none");
+    }
+  }
+});
+
 // ==========================================
-//    LOGIC CORE (SYNCED WITH ARDUINO)
+// 7. SYSTEM STATUS LOGIC
 // ==========================================
 function calculateStatus(water, rainRaw, soil) {
   let status = "SAFE";
   let msg = "System operational. All sensors within safe parameters.";
 
-  // CONSTANTS FROM ARDUINO CODE
   const WATER_DANGER_CM = 45;
   const WATER_WARN_CM = 55;
   const RAIN_HEAVY = 1500;
   const RAIN_LIGHT = 2500;
 
-  // LOGIC HIERARCHY MATCHING ARDUINO LOOP:
-
-  // 1. DANGER STATE (Priority 1)
-  // Logic: Water < 40 OR (Water < 50 AND (Heavy Rain OR Soil > 80%))
+  // 1. DANGER STATE
   if (water > 0 && water < WATER_DANGER_CM) {
     status = "DANGER";
-    msg = "CRITICAL ALERT: Flood imminent! Water level critical (<40cm).";
-  } else if (
-    water > 0 &&
-    water < WATER_WARN_CM &&
-    (rainRaw < RAIN_HEAVY || soil > 80)
-  ) {
+    msg = "CRITICAL ALERT: Flood imminent! Water level critical (<45cm).";
+  } else if (water > 0 && water < WATER_WARN_CM && (rainRaw < RAIN_HEAVY || soil > 80)) {
     status = "DANGER";
     msg = "DANGER: High water level detected combined with adverse weather.";
   }
-
-  // 2. WARNING STATE (Priority 2)
-  // Logic: Water < 50 OR Rain < 2500 OR Soil > 50%
-  else if (
-    (water > 0 && water < WATER_WARN_CM) ||
-    rainRaw < RAIN_LIGHT ||
-    soil > 50
-  ) {
+  // 2. WARNING STATE
+  else if ((water > 0 && water < WATER_WARN_CM) || rainRaw < RAIN_LIGHT || soil > 50) {
     status = "WARNING";
-    msg =
-      "CAUTION: Potential flood risk detected. Rain or moisture levels high.";
+    msg = "CAUTION: Potential flood risk detected. Rain or moisture levels high.";
   }
-
-  // 3. SAFE STATE (Default)
+  // 3. SAFE STATE
   else {
     status = "SAFE";
     msg = "System operational. All sensors within safe parameters.";
@@ -300,8 +435,7 @@ function updateSystemStatus(statusString, msg) {
   if (statusString === "DANGER") type = "danger";
 
   ui.statusText.innerText = `SYSTEM ${statusString}`;
-  ui.adviceHeading.innerText =
-    statusString === "SAFE" ? "SECURE" : statusString;
+  ui.adviceHeading.innerText = statusString === "SAFE" ? "SECURE" : statusString;
   ui.adviceText.innerText = msg;
 
   const colorMap = {
@@ -315,9 +449,9 @@ function updateSystemStatus(statusString, msg) {
   ui.statusDot.style.backgroundColor = colorVar;
   ui.statusDot.style.boxShadow = `var(--glow-${type})`;
   ui.statusBadge.style.color = colorVar;
-  ui.statusBadge.style.borderColor =
-    type !== "safe" ? colorVar : "var(--border-color)";
+  ui.statusBadge.style.borderColor = type !== "safe" ? colorVar : "var(--border-color)";
 
+  // Icon Logic
   ui.adviceIconContainer.style.animationName = "none";
   void ui.adviceIconContainer.offsetWidth; // Trigger reflow
 
@@ -335,55 +469,3 @@ function updateSystemStatus(statusString, msg) {
     document.body.classList.add("danger-active");
   }
 }
-
-// ==========================================
-//           HISTORY CHART DATA
-// ==========================================
-const historyRef = query(ref(db, "AQUA/History"), limitToLast(50));
-onValue(historyRef, (snapshot) => {
-  const data = snapshot.val();
-  if (data) {
-    const labels = [];
-    const waterData = [];
-    const soilData = [];
-    const rainData = [];
-
-    const dataArray = Object.values(data).sort(
-      (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-    );
-
-    dataArray.forEach((entry) => {
-      // Use Arduino's formatted timestamp string if available
-      if (entry.timestamp) {
-        // Simple regex to grab HH:MM from "YYYY-MM-DD HH:MM:SS"
-        const timePart = entry.timestamp.split(" ")[1];
-        if (timePart) {
-          const [hh, mm] = timePart.split(":");
-          labels.push(`${hh}:${mm}`);
-        } else {
-          labels.push("??:??");
-        }
-      } else {
-        labels.push("??:??");
-      }
-
-      let w = parseFloat(entry.water);
-      if (w > 900 || isNaN(w)) w = 0;
-      waterData.push(w);
-      soilData.push(entry.soil);
-
-      let rRaw = parseFloat(entry.rain || 4095);
-      let rPct = Math.round(((4095 - rRaw) / 4095) * 100);
-      if (rPct < 0) rPct = 0;
-      rainData.push(rPct);
-    });
-
-    if (myChart) {
-      myChart.data.labels = labels;
-      myChart.data.datasets[0].data = waterData;
-      myChart.data.datasets[1].data = soilData;
-      myChart.data.datasets[2].data = rainData;
-      myChart.update("none");
-    }
-  }
-});

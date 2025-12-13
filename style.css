@@ -1,3 +1,6 @@
+/* =========================================
+   1. VARIABLES & THEME CONFIG
+========================================= */
 :root {
   --bg-color: #f3f4f6;
   --nav-bg: rgba(255, 255, 255, 0.9);
@@ -45,6 +48,9 @@ body.dark-mode {
   --glow-danger: 0 0 35px rgba(239, 68, 68, 0.3);
 }
 
+/* =========================================
+   2. GLOBAL RESET & LAYOUT
+========================================= */
 * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.3s ease; }
 
 body { 
@@ -57,6 +63,9 @@ body {
 
 .app-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
 
+/* =========================================
+   3. NAVBAR
+========================================= */
 .navbar { 
   height: 70px; 
   padding: 0 2rem; 
@@ -82,12 +91,73 @@ body {
 .icon-btn:hover { background-color: var(--border-color); }
 .profile-avatar { font-size: 0.75rem; font-weight: 600; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: 20px; color: var(--text-secondary); }
 
-
+/* =========================================
+   4. DASHBOARD & HEADER (NEW LUXURY HUD)
+========================================= */
 .dashboard { flex: 1; padding: 2.5rem 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
 
-.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  position: relative;
+}
+
 .page-title { font-family: var(--font-heading); font-size: 2.5rem; font-weight: 300; line-height: 1.1; }
 .page-subtitle { color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.95rem; }
+
+/* --- WEATHER HUD STYLES START --- */
+.weather-hud-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; 
+  justify-content: center;
+  margin-left: auto; 
+  margin-right: 2rem; 
+  padding-right: 2rem;
+  border-right: 1px solid var(--border-color);
+}
+
+.weather-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.loc-icon { width: 14px; height: 14px; color: var(--accent-safe); }
+
+.weather-metrics { display: flex; align-items: center; gap: 1rem; }
+
+.metric-main { display: flex; align-items: center; gap: 10px; }
+
+.temp-big {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 300;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.weather-icon-hud { width: 32px; height: 32px; stroke-width: 1.5; color: var(--text-primary); }
+
+.metric-divider { width: 1px; height: 30px; background: var(--border-color); opacity: 0.5; }
+
+.metric-details { display: flex; flex-direction: column; justify-content: center; gap: 2px; text-align: left; }
+
+.condition-text { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); }
+
+.meta-row { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-secondary); }
+.tiny-icon { width: 12px; height: 12px; opacity: 0.7; }
+/* --- WEATHER HUD STYLES END --- */
 
 .status-badge { 
   display: flex; align-items: center; gap: 0.8rem; 
@@ -99,9 +169,11 @@ body {
 }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-safe); box-shadow: var(--glow-safe); }
 
+/* =========================================
+   5. SENSOR GRID & CARDS
+========================================= */
 .main-layout { display: flex; flex-direction: column; gap: 1.5rem; }
 .sensor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-
 
 .card { 
   background: var(--card-bg); 
@@ -118,6 +190,7 @@ body {
 .unit { margin-left: 0.5rem; color: var(--text-secondary); font-size: 1rem; }
 .card-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-secondary); }
 
+/* Featured / Advice Card */
 .featured-card { background: var(--featured-card-bg); overflow: hidden; padding: 0; min-height: auto; }
 .card-bg-grid, .card-scan-line { position: absolute; inset: 0; pointer-events: none; }
 .card-bg-grid { background-image: linear-gradient(var(--border-color) 1px, transparent 1px), linear-gradient(90deg, var(--border-color) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.1; }
@@ -143,6 +216,7 @@ body {
 #advice-status-heading { font-family: var(--font-heading); font-size: 2rem; font-weight: 700; color: var(--dynamic-color); line-height: 1; }
 .advice-text { font-size: 1rem; color: var(--text-primary); opacity: 0.9; line-height: 1.5; }
 
+/* Visual Elements in Cards */
 .visual-bar-container { width: 100%; height: 6px; background: var(--border-color); border-radius: 3px; margin-top: 10px; overflow: hidden; }
 .visual-bar { height: 100%; width: 0%; background: var(--text-primary); }
 .circular-progress { width: 100px; height: 100px; border-radius: 50%; align-self: center; display: flex; align-items: center; justify-content: center; background: var(--border-color); }
@@ -150,6 +224,7 @@ body {
 .center-content { align-items: center; text-align: center; }
 .weather-icon-box { margin-bottom: 0.5rem; transform: scale(1.3); color: var(--text-primary); }
 
+/* Chart Area */
 .chart-card { min-height: 400px; }
 .chart-wrapper { position: relative; width: 100%; height: 300px; padding: 5px; }
 .chart-legend-custom { display: flex; gap: 10px; font-size: 0.75rem; color: var(--text-secondary); }
@@ -157,6 +232,9 @@ body {
 .dot-l { width: 8px; height: 8px; border-radius: 50%; }
 .water-l { background: #06b6d4; } .soil-l { background: #10b981; } .rain-l { background: #a855f7; }
 
+/* =========================================
+   6. ANIMATIONS & EFFECTS
+========================================= */
 .pulse-effect { animation: pulse-safe 2s infinite; }
 .danger-active { animation: flash-border 2s infinite; }
 @keyframes flash-border { 0%, 100% { border-color: var(--accent-danger); } 50% { border-color: transparent; } }
@@ -164,9 +242,32 @@ body {
 @keyframes pulse-warning { 0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); } 70% { box-shadow: 0 0 0 15px transparent; } }
 @keyframes pulse-danger { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 20px transparent; } }
 
+/* =========================================
+   7. FOOTER
+========================================= */
 .footer { padding: 1.5rem; border-top: 1px solid var(--border-color); margin-top: auto; background: var(--bg-color); }
 .footer-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.8rem; }
 
+/* =========================================
+   8. RESPONSIVE MEDIA QUERIES
+========================================= */
+@media (max-width: 900px) {
+  /* Header Adjustments */
+  .page-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+  
+  .weather-hud-container {
+    margin-left: 0;
+    margin-right: 0;
+    align-items: flex-start; /* Align left on Mobile */
+    border-right: none;
+    border-left: 2px solid var(--accent-safe); /* Change divider to left */
+    padding-right: 0;
+    padding-left: 1.5rem;
+    width: 100%;
+  }
+
+  .status-badge { width: auto; align-self: flex-start; }
+}
 
 @media (max-width: 768px) {
   .navbar { padding: 0 1rem; height: 60px; }
@@ -177,112 +278,38 @@ body {
   
   .dashboard { padding: 1.5rem 1rem; }
   
-  .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
-  .page-title { font-size: 2rem; }
-  .status-badge { width: 100%; justify-content: center; }
-
-  .protocol-content { 
-    flex-direction: column; 
-    padding: 1.5rem; 
-    gap: 1rem; 
-    text-align: center; 
-  }
-  
+  .protocol-content { flex-direction: column; padding: 1.5rem; gap: 1rem; text-align: center; }
   .status-indicator-group { 
-    flex-direction: column;
-    align-items: center; 
-    border-right: none; 
-    padding-right: 0; 
-    margin-right: 0; 
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1.5rem;
-    width: 100%;
-    gap: 1rem;
+    flex-direction: column; align-items: center; 
+    border-right: none; padding-right: 0; margin-right: 0; 
+    border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; 
+    width: 100%; gap: 1rem;
   }
-
-  .icon-container {
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
+  .icon-container { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; }
   .status-text-wrapper { text-align: center; }
-  
   .advice-text { font-size: 0.95rem; text-align: center; }
   
   .sensor-grid { grid-template-columns: 1fr; gap: 1rem; }
-  
   .chart-card { min-height: auto; }
   .chart-wrapper { height: 250px; }
 }
 
-/* --- LUXURY SPLASH SCREEN --- */
+/* =========================================
+   9. LUXURY SPLASH SCREEN
+========================================= */
 .splash-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #09090b;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: #09090b; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
   transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
 }
+.splash-screen.hidden { opacity: 0; visibility: hidden; }
+.splash-content { text-align: center; animation: fadeUp 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.splash-logo { font-family: 'Space Grotesk', sans-serif; font-size: 4rem; font-weight: 700; color: #f3f4f6; letter-spacing: 2px; margin-bottom: 1rem; }
+.splash-dot { color: #059669; text-shadow: 0 0 20px rgba(5, 150, 105, 0.5); }
+.splash-line { width: 0; height: 2px; background: linear-gradient(90deg, transparent, #059669, transparent); margin: 0 auto 1.5rem auto; animation: lineExpand 1.5s ease-out forwards 0.5s; }
+.splash-text { font-family: 'Inter', sans-serif; font-size: 0.8rem; letter-spacing: 6px; color: #6b7280; text-transform: uppercase; opacity: 0; animation: fadeIn 1s ease-out forwards 1s; }
 
-.splash-screen.hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.splash-content {
-  text-align: center;
-  animation: fadeUp 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.splash-logo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 4rem;
-  font-weight: 700;
-  color: #f3f4f6;
-  letter-spacing: 2px;
-  margin-bottom: 1rem;
-}
-
-.splash-dot {
-  color: #059669;
-  text-shadow: 0 0 20px rgba(5, 150, 105, 0.5);
-}
-
-.splash-line {
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #059669, transparent);
-  margin: 0 auto 1.5rem auto;
-  animation: lineExpand 1.5s ease-out forwards 0.5s;
-}
-
-.splash-text {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  letter-spacing: 6px;
-  color: #6b7280;
-  text-transform: uppercase;
-  opacity: 0;
-  animation: fadeIn 1s ease-out forwards 1s;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes lineExpand {
-  to { width: 100px; }
-}
-
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes lineExpand { to { width: 100px; } }
+@keyframes fadeIn { to { opacity: 1; } }
